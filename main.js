@@ -33,21 +33,21 @@ app.on('activate', () => {
   }
 });
 
-// IPC handler for the "navigate-to-site" event
-ipcMain.handle('navigate-to-site', async (event, url) => {
-  const axios = require('axios');
-
-  try {
-    const response = await axios.get(url, {
-        headers: {
-         Authorization: ''});
-
-    // Assuming the response contains the site contents data
-    const siteContents = response.data;
-
-    return siteContents;
-  } catch (error) {
-    console.error('Error fetching data from SharePoint:', error.message);
-    throw error;
-  }
-});
+ipcMain.handle('get-contents', async (event, url) => {
+    const axios = require('axios');
+  
+    try {
+        const response = await axios.get(url, {
+            headers: {
+             Authorization: ''
+            }});
+  
+      // Assuming the response contains the list of contents data
+      const contents = response.data.value;
+  
+      return contents;
+    } catch (error) {
+      console.error('Error fetching contents from SharePoint:', error.message);
+      throw error;
+    }
+  });
