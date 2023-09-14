@@ -60,6 +60,9 @@
         <button onclick="fetchContents()">Fetch Contents</button>
       </div>
 
+      <input type="text" id="customEndpoint" placeholder="Custom API Endpoint">
+    <button onclick="fetchCustomContents()">Fetch Custom Contents</button>
+
       <div class="list-container">
         <h3>SharePoint Contents:</h3>
         <ul id="siteContents"></ul>
@@ -94,6 +97,37 @@
             'Error invoking IPC (check console for details).';
         }
       }
+      async function fetchCustomContents() {
+        const customEndpoint = document.getElementById('customEndpoint').value;
+
+        try {
+          // Ensure the customEndpoint is a valid URL before making the request
+          const url = new URL(customEndpoint);
+
+          // You can add additional validation logic as needed
+
+          const contents = await ipcRenderer.invoke('get-contents', customEndpoint);
+
+          if (contents.error) {
+            console.error('Error fetching contents from SharePoint:', contents.error);
+            document.getElementById('siteContents').innerText = 'Error fetching contents.';
+          } else {
+            const siteContentsList = document.getElementById('siteContents');
+            siteContentsList.innerHTML = '';
+
+            contents.forEach((content) => {
+              const li = document.createElement('li');
+              li.textContent = content.Title;
+              siteContentsList.appendChild(li);
+            });
+          }
+        } catch (error) {
+          console.error('Error invoking IPC:', error);
+          document.getElementById('siteContents').innerText =
+            'Error invoking IPC (check console for details).';
+        }
+      }
+
     </script>
   </body>
 </html>
