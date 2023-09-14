@@ -61,7 +61,10 @@
       </div>
 
       <input type="text" id="customEndpoint" placeholder="Custom API Endpoint">
-    <button onclick="fetchCustomContents()">Fetch Custom Contents</button>
+      <button onclick="fetchCustomContents()">Fetch Custom Contents</button>
+
+      <input type="text" id="searchInput" placeholder="Search SharePoint">
+      <button onclick="searchContents()">Search</button>
 
       <div class="list-container">
         <h3>SharePoint Contents:</h3>
@@ -111,6 +114,39 @@
           if (contents.error) {
             console.error('Error fetching contents from SharePoint:', contents.error);
             document.getElementById('siteContents').innerText = 'Error fetching contents.';
+          } else {
+            const siteContentsList = document.getElementById('siteContents');
+            siteContentsList.innerHTML = '';
+
+            contents.forEach((content) => {
+              const li = document.createElement('li');
+              li.textContent = content.Title;
+              siteContentsList.appendChild(li);
+            });
+          }
+        } catch (error) {
+          console.error('Error invoking IPC:', error);
+          document.getElementById('siteContents').innerText =
+            'Error invoking IPC (check console for details).';
+        }
+      }
+      async function searchContents() {
+        const searchQuery = document.getElementById('searchInput').value;
+
+        try {
+          // Ensure the searchQuery is not empty
+          if (!searchQuery) {
+            console.error('Search query is empty.');
+            return;
+          }
+
+          const searchUrl = `SiteUrl/_api/web/lists/getbytitle('YourListName')/items?$filter=substringof('${searchQuery}',Title)`;
+
+          const contents = await ipcRenderer.invoke('get-contents', searchUrl);
+
+          if (contents.error) {
+            console.error('Error searching contents in SharePoint:', contents.error);
+            document.getElementById('siteContents').innerText = 'Error searching contents.';
           } else {
             const siteContentsList = document.getElementById('siteContents');
             siteContentsList.innerHTML = '';
