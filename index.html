@@ -86,6 +86,11 @@
         <ul id="siteContents"></ul>
       </div>
       <div id="loading" class="loading"></div>
+      <div class="pagination">
+        <button id="prevPage" onclick="prevPage()">Previous</button>
+        <span id="currentPage">Page 1</span>
+        <button id="nextPage" onclick="nextPage()">Next</button>
+      </div>
     </div>
 
     <script>
@@ -93,12 +98,12 @@
 
       let siteUrl = 'SiteUrl/_api/web/webs';
       const loadingSpinner = document.getElementById('loading');
+      let contents = [];
 
       async function fetchContents() {
         try {
           loadingSpinner.style.display = 'block';
-          const contents = await ipcRenderer.invoke('get-contents', siteUrl);
-          siteContentsList.innerHTML = '';
+          contents = await ipcRenderer.invoke('get-contents', siteUrl);
           loadingSpinner.style.display = 'none';
 
           if (contents.error) {
@@ -133,7 +138,7 @@
         try {
           const url = new URL(customEndpoint);
 
-          const contents = await ipcRenderer.invoke('get-contents', customEndpoint);
+          contents = await ipcRenderer.invoke('get-contents', customEndpoint);
 
           if (contents.error) {
             console.error('Error fetching contents from SharePoint:', contents.error);
@@ -157,12 +162,6 @@
       async function searchContents() {
         const searchQuery = document.getElementById('searchInput').value;
 
-        if (!searchQuery) {
-          console.error('Search query is empty.');
-          document.getElementById('siteContents').innerText = 'Search query is empty.';
-          return;
-        }
-
         try {
           // Ensure the searchQuery is not empty
           if (!searchQuery) {
@@ -172,7 +171,7 @@
 
           const searchUrl = `SiteUrl/_api/web/lists/getbytitle('YourListName')/items?$filter=substringof('${searchQuery}',Title)`;
 
-          const contents = await ipcRenderer.invoke('get-contents', searchUrl);
+          contents = await ipcRenderer.invoke('get-contents', searchUrl);
 
           if (contents.error) {
             console.error('Error searching contents in SharePoint:', contents.error);
@@ -194,6 +193,43 @@
         }
       }
 
+      let currentPageNumber = 1;
+      let contentsPerPage = 5;
+      
+      function prevPage() {
+        if (currentPageNumber > 1) {
+          currentPageNumber--;
+          updatePageContents();
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(contents.length / contentsPerPage); // Change itemsPerPage to contentsPerPage
+
+        if (currentPageNumber < totalPages) {
+          currentPageNumber++;
+          updatePageContents();
+        }
+      }
+
+
+      function updatePageContents() {
+        const startIndex = (currentPageNumber - 1) * contentsPerPage;
+        const endIndex = startIndex + contentsPerPage;
+        const pageContents = contents.slice(startIndex, endIndex);
+
+        const siteContentsList = document.getElementById('siteContents');
+        siteContentsList.innerHTML = '';
+
+        pageContents.forEach((content) => {
+          const li = document.createElement('li');
+          li.textContent = content.Title;
+          siteContentsList.appendChild(li);
+        });
+
+        const currentPageIndicator = document.getElementById('currentPage');
+        currentPageIndicator.textContent = `Page ${currentPageNumber}`;
+      }
     </script>
   </body>
 </html>
